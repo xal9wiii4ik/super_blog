@@ -4,7 +4,7 @@
       <nav class="header__nav">
         <ul class="header__list">
             <li class="header__list__item">
-              <router-link class="header__list__link" to="/">
+              <router-link class="header__list__link" to="">
                 <h4 class="header__list__link">home</h4>
               </router-link>
             </li>
@@ -16,8 +16,8 @@
           </ul>
       </nav>
     </div>
-    <router-view/>
   </div>
+  <router-view/>
 </template>
 
 <style>
