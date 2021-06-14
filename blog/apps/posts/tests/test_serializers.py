@@ -53,12 +53,14 @@ class SerializerTestCase(TestCase):
                 'id': self.post.pk,
                 'title': 'first title for posts',
                 'description': 'description for first post',
+                'image': None,
                 'category': self.category_1.pk
             },
             {
                 'id': self.post_1.pk,
                 'title': 'this is the second title for posts',
                 'description': 'this is description for second post',
+                'image': None,
                 'category': self.category.pk
             }
         ]

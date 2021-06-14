@@ -1,3 +1,5 @@
+import typing as tp
+
 from django.db import models
 
 
@@ -29,6 +31,8 @@ class Post(models.Model):
                                            related_name='post_category')
     title: str = models.CharField(max_length=100, verbose_name='title')
     description: str = models.TextField(verbose_name='description')
+    image: tp.IO = models.ImageField(verbose_name='image', upload_to='images/', null=True)
+    # TODO change upload path
 
     def __str__(self) -> str:
         return f'pk: {self.pk}, category: {self.category.name}, title: {self.title}'
