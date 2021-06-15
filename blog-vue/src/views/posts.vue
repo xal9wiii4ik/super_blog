@@ -35,5 +35,10 @@ export default {
   },
 }
 </script>
-<style scoped lang="scss">
+<style scoped>
+.container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 62%;
+}
 </style>

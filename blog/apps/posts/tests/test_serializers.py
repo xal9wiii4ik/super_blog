@@ -54,6 +54,7 @@ class SerializerTestCase(TestCase):
                 'title': 'first title for posts',
                 'description': 'description for first post',
                 'image': None,
+                'published_date': self.post.published_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
                 'category': self.category_1.pk
             },
             {
@@ -61,6 +62,7 @@ class SerializerTestCase(TestCase):
                 'title': 'this is the second title for posts',
                 'description': 'this is description for second post',
                 'image': None,
+                'published_date': self.post_1.published_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
                 'category': self.category.pk
             }
         ]
