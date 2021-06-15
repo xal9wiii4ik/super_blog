@@ -1,3 +1,4 @@
+from datetime import datetime
 import typing as tp
 
 from django.db import models
@@ -32,6 +33,7 @@ class Post(models.Model):
     title: str = models.CharField(max_length=100, verbose_name='title')
     description: str = models.TextField(verbose_name='description')
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True)
+    published_date: datetime = models.DateTimeField(auto_now_add=True, null=True)
     # TODO change upload path
 
     def __str__(self) -> str:
