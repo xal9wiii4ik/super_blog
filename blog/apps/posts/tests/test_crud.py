@@ -1,8 +1,5 @@
 import json
 
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import User
-from django.db.models import F
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase

@@ -51,7 +51,7 @@ class Post(models.Model):
                                            related_name='post_category')
     title: str = models.CharField(max_length=100, verbose_name='title')
     description: str = models.TextField(verbose_name='description')
-    image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True)
+    image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
     published_date: datetime = models.DateTimeField(auto_now_add=True, null=True)
 
     # TODO change upload path
@@ -59,9 +59,9 @@ class Post(models.Model):
 
     def save(self, *args, **kwargs) -> tp.Any:
         super().save(*args, **kwargs)
-        if self.image is not None:
+        if self.image._file is not None:
+            print(1)
             save_picture(image=self.image)
-
 
     def __str__(self) -> str:
         return f'pk: {self.pk}, category: {self.category.name}, title: {self.title}'
