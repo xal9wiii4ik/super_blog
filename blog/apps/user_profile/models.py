@@ -1,5 +1,9 @@
+import typing as tp
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+from apps.posts.models import save_picture
 
 
 class Uid(models.Model):
@@ -31,10 +35,16 @@ class Account(AbstractUser):
         ('female', 'female')
     ]
 
-    image = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
+    image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
     # TODO add optimize images; rename path
-    gender = models.CharField(max_length=6, choices=GENDER_CHOICES, verbose_name='gender')
-    phone = models.CharField(max_length=26, verbose_name='phone')
+    gender: str = models.CharField(max_length=6, choices=GENDER_CHOICES, verbose_name='gender')
+    phone: str = models.CharField(max_length=26, verbose_name='phone')
+
+    def save(self, *args, **kwargs) -> tp.Any:
+        super().save(*args, **kwargs)
+        if self.image._file is not None:
+            print(1)
+            save_picture(image=self.image)
 
     def __str__(self) -> str:
         return f'pk: {self.pk}, username: {self.username}, email: {self.email}'
