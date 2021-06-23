@@ -9,3 +9,4 @@
 */__pycache__/*
 /blog/images
 /blog/db.sqlite3
+.env
