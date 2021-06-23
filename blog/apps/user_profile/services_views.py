@@ -27,9 +27,9 @@ def send_activation_email(request: Request, data: dict):
 
     logger.info(msg='creating web url')
     uid_data = _create_unique_uid(user_id=data['id'])
-    url = _create_web_url(is_secure=request.is_secure(),
-                          host=request.get_host(),
-                          url=f'/api/account/{uid_data["uid"]}/{uid_data["user_id"]}')
+    url = _current_ip_port(is_secure=request.is_secure(),
+                           host=request.get_host(),
+                           url=f'/api/account/activate_account/{uid_data["uid"]}/{uid_data["user_id"]}')
     logger.info(msg=f'sending activation email')
     # TODO move send email to celery
     send_mail(subject='Activation mail',
@@ -51,9 +51,9 @@ def _create_unique_uid(user_id: int) -> dict:
     return {'uid': uid.uid.hex, 'user_id': user_id}
 
 
-def _create_web_url(is_secure: bool, host: str, url: str) -> str:
+def _current_ip_port(is_secure: bool, host: str, url: str) -> str:
     """
-    Creating web url with the current port and host
+    Creating web url with the current port and ip
     :param is_secure:
     :param host:
     :param url:
