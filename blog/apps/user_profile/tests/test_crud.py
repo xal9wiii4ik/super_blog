@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
@@ -9,9 +10,9 @@ from rest_framework.test import APITestCase
 from apps.user_profile.serializers import AccountModelSerializer
 
 
-class CategoryApiTestCase(APITestCase):
+class AccountApiTestCase(APITestCase):
     """
-    Api test for categories
+    Api test for account
     """
 
     def setUp(self) -> None:
@@ -29,7 +30,6 @@ class CategoryApiTestCase(APITestCase):
             'password': 'password'
         }
         json_data = json.dumps(data)
-        check = self.client.post(path=url, data=json_data, content_type='application/json')
         self.token = f"Token " \
                      f"{self.client.post(path=url, data=json_data, content_type='application/json').data['access']}"
 
