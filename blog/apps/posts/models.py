@@ -55,12 +55,10 @@ class Post(models.Model):
     published_date: datetime = models.DateTimeField(auto_now_add=True, null=True)
 
     # TODO change upload path
-    # image: quality: 50; size: (800, 768);
 
     def save(self, *args, **kwargs) -> tp.Any:
         super().save(*args, **kwargs)
         if self.image._file is not None:
-            print(1)
             save_picture(image=self.image)
 
     def __str__(self) -> str:
