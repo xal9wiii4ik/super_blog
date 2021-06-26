@@ -1,4 +1,5 @@
 import typing as tp
+from datetime import datetime
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -16,6 +17,7 @@ class Uid(models.Model):
 
     uid = models.UUIDField(verbose_name='uuid')
     user_id = models.BigIntegerField(verbose_name='user_id')
+    date_created = models.DateField(verbose_name='date_created', auto_now_add=True)
 
     def __str__(self) -> str:
         return f'pk: {self.pk}, uid: {self.uid}, user_id: {self.user_id}'
