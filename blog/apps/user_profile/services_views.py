@@ -1,14 +1,15 @@
 import uuid
-
 import colorlog
 import logging
 
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.utils import timezone
 
 from rest_framework.request import Request
 
 from blog import settings
-from apps.user_profile.models import Uid
+from apps.user_profile.models import Uid, Account
 
 handler = colorlog.StreamHandler()
 handler.setFormatter(colorlog.ColoredFormatter(
@@ -38,6 +39,24 @@ def send_activation_email(request: Request, data: dict):
               recipient_list=[request.data['email']],
               fail_silently=False)
     logger.info(msg=f'Email has been send to {request.data["email"]}')
+
+
+def activation_account(uid: str, user_id: int):
+    """
+    Activate user account
+    """
+
+    try:
+        current_uid = Uid.objects.get(uid=uid, user_id=user_id)
+        account = get_user_model().objects.get(pk=current_uid.user_id)
+        account.is_active = True
+        account.last_login = timezone.now()
+        account.save()
+        current_uid.delete()
+        logger.info(f'Account with id:{account.pk} has been activate')
+    except Uid.DoesNotExist as e:
+        print(e)
+        # TODO: add redirect to 404 page
 
 
 def _create_unique_uid(user_id: int) -> dict:
