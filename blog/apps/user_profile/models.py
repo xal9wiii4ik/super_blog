@@ -17,6 +17,7 @@ class Uid(models.Model):
 
     uid = models.UUIDField(verbose_name='uuid')
     user_id = models.BigIntegerField(verbose_name='user_id')
+    updated_data = models.CharField(max_length=200, verbose_name='updated_data', null=True)
     date_created = models.DateField(verbose_name='date_created', auto_now_add=True)
 
     def __str__(self) -> str:
