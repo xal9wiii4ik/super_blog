@@ -20,78 +20,42 @@ logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 
-def send_activation_email(request: Request, data: dict):
+def send_updating_email(request: Request, data: dict, action: str, email: str = None):
     """
-    Sending activation email to user
-    :return:
+    Sending email for updating account or activate and etc
     """
 
-    logger.info(msg='creating web url for activate email')
-    # TODO mb move 2 lines to new function
-    uid_data = _create_unique_uid(user_id=data['id'])
+    logger.info(msg=f'creating web url for {action}')
+    uid_data = _create_unique_uid(user_id=data['id'],
+                                  updated_data=email if email is not None else None)
     url = _current_ip_port(is_secure=request.is_secure(),
                            host=request.get_host(),
-                           url=f'/api/account/activate_account/{uid_data["uid"]}/{uid_data["user_id"]}')
-    logger.info(msg=f'sending activation email')
+                           url=f'/api/account/{action}/{uid_data["uid"]}/{uid_data["user_id"]}')
+    logger.info(msg=f'sending email with {action}')
+    message = f'Your new email: {email}' if email is not None else ''
     # TODO move send email to celery
-    send_mail(subject='Activation email',
-              message=f'Your activation link: \n {url}',
+    send_mail(subject=f'{action} email',
+              message=f'Your {action} link: \n {url}\n' + message,
               from_email=settings.EMAIL_HOST_USER,
-              recipient_list=[request.data['email']],
+              recipient_list=[data['email'] if email is not None else request.data.get('email')],
               fail_silently=False)
-    logger.info(msg=f'Email has been send to {request.data["email"]}')
+    logger.info(msg=f'Email has been send to {data["email"] if email is not None else request.data.get("email")}')
 
 
-def activation_account(uid: str, user_id: int):
+def updating_account(uid: str, user_id: int):
     """
-    Activate user account
+    Func for activate account or updating fields who need confirmation
     """
 
     try:
         current_uid = Uid.objects.get(uid=uid, user_id=user_id)
         account = get_user_model().objects.get(pk=current_uid.user_id)
+        account.email = current_uid.updated_data if current_uid.updated_data is not None else account.email
         account.is_active = True
         account.last_login = timezone.now()
         account.save()
         current_uid.delete()
-        logger.info(f'Account with id:{account.pk} has been activate')
-    except Uid.DoesNotExist as e:
-        print(e)
-        # TODO: add redirect to 404 page
-
-
-def send_updating_email(email: str, request: Request, data: dict):
-    """
-    Update email field(send confirmation to email)
-    """
-    logger.info(msg='creating web url for update email')
-    uid_data = _create_unique_uid(user_id=data['id'], updated_data=email)
-    url = _current_ip_port(is_secure=request.is_secure(),
-                           host=request.get_host(),
-                           url=f'/api/account/update_account/{uid_data["uid"]}/{uid_data["user_id"]}')
-    # TODO check with postman
-    logger.info(msg=f'sending email for update')
-    # TODO move send email to celery
-    send_mail(subject='Update email',
-              message=f'Your confirm link: \n {url}',
-              from_email=settings.EMAIL_HOST_USER,
-              recipient_list=[data['email']],
-              fail_silently=False)
-    logger.info(msg=f'Email has been send to {data["email"]}')
-
-
-def update_email(uid: str, user_id: int):
-    """
-    Update field email in table account
-    """
-
-    try:
-        current_uid = Uid.objects.get(uid=uid, user_id=user_id)
-        account = get_user_model().objects.get(pk=current_uid.user_id)
-        account.email = current_uid.updated_data
-        account.save()
-        current_uid.delete()
-        logger.info(f'Account with id:{account.pk} has been update')
+        logger.info(f'Account with id:{account.pk} has been updated')
     except Uid.DoesNotExist as e:
         print(e)
         # TODO: add redirect to 404 page

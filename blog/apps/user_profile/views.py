@@ -7,8 +7,8 @@ from rest_framework.decorators import action
 from apps.user_profile.models import Account
 from apps.user_profile.serializers import AccountModelSerializer
 from apps.user_profile.permmissions import IsAuthenticatedOrOwner
-from apps.user_profile.services_views import send_activation_email, activation_account, send_updating_email, \
-    update_email
+from apps.user_profile.services_views import send_activation_email, updating_account, send_updating_email
+    # update_email, activation_account
 
 
 class UserProfileModelViewSet(ModelViewSet):
@@ -20,19 +20,22 @@ class UserProfileModelViewSet(ModelViewSet):
     serializer_class = AccountModelSerializer
     permission_classes = (IsAuthenticatedOrOwner,)
     parser_classes = (MultiPartParser,)
+    # TODO update tests
 
     def partial_update(self, request, *args, **kwargs) -> Response:
         request.data._mutable = True
         if request.data.get('email') is not None:
             email = request.data.pop('email')
             response = super(UserProfileModelViewSet, self).partial_update(request, *args, **kwargs)
-            send_updating_email(email=email[0], request=request, data=response.data)
-        return Response(data={'ok': 'user has been activate successfully'}, status=status.HTTP_200_OK)
+            send_updating_email(request=request, data=response.data, action='update_account', email=email[0])
+        response = super(UserProfileModelViewSet, self).partial_update(request, *args, **kwargs)
+        return Response(data=response.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs) -> Response:
         request.data['is_active'] = False
         response = super(UserProfileModelViewSet, self).create(request, *args, **kwargs)
-        send_activation_email(request=request, data=response.data)
+        # send_activation_email(request=request, data=response.data)
+        send_updating_email(request=request, data=response.data, action='activate_account')
         return response
 
     @action(detail=False,
@@ -44,8 +47,8 @@ class UserProfileModelViewSet(ModelViewSet):
         Url for activate account
         """
 
-        activation_account(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']))
-        return Response(data={'ok': 'user has been activate successfully'}, status=status.HTTP_200_OK)
+        updating_account(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']))
+        return Response(data={'ok': 'email has been updated successfully'}, status=status.HTTP_200_OK)
 
     @action(detail=False,
             methods=['GET'],
@@ -56,5 +59,5 @@ class UserProfileModelViewSet(ModelViewSet):
         Url for update fields in account(email)
         """
 
-        update_email(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']))
+        updating_account(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']))
         return Response(data={'ok': 'user has been activate successfully'}, status=status.HTTP_200_OK)
