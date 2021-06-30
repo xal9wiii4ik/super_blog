@@ -1,12 +1,28 @@
 import typing as tp
-from abc import ABC
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
+
 from rest_framework import serializers
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.user_profile.models import Account
 from apps.user_profile.serializers_services import validate_email, validate_passwords
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """ Custom token serializer """
+
+    def to_internal_value(self, data: tp.Any):
+        data['username'] = Account.objects.get(email=data['email']).username if data.get('email') is not None \
+            else data.get('username')
+        return super(CustomTokenObtainPairSerializer, self).to_internal_value(data)
+
+    def validate(self, attrs: tp.Any):
+        data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
+        data['id'] = Account.objects.get(username=attrs['username']).id
+        return data
 
 
 class AccountModelSerializer(serializers.ModelSerializer):
@@ -14,13 +30,14 @@ class AccountModelSerializer(serializers.ModelSerializer):
     Model serializer for model Account
     """
 
-    password = serializers.CharField(write_only=True)
-    # TODO move mb password from validate to validate_password and email
-
     class Meta:
         model = Account
         fields = ('password', 'username', 'first_name', 'last_name',
                   'email', 'image', 'gender', 'phone', 'id', 'is_active')
+
+    password = serializers.CharField(write_only=True)
+
+    # TODO move mb password from validate to validate_password and email
 
     def validate(self, attrs) -> tp.Any:
         """
