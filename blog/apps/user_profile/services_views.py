@@ -20,19 +20,22 @@ logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
 
-def send_updating_email(request: Request, data: dict, action: str, email: str = None):
+def send_updating_email(request: Request, data: dict, action: str, email: str = None, updated_data: str = None):
     """
     Sending email for updating account or activate and etc
     """
 
     logger.info(msg=f'creating web url for {action}')
+    # TODO check updated data (tests)
     uid_data = _create_unique_uid(user_id=data['id'],
-                                  updated_data=email if email is not None else None)
+                                  updated_data=updated_data)
     url = _current_ip_port(is_secure=request.is_secure(),
                            host=request.get_host(),
                            url=f'/api/account/{action}/{uid_data["uid"]}/{uid_data["user_id"]}')
     logger.info(msg=f'sending email with {action}')
     message = f'Your new email: {email}' if email is not None else ''
+    message += f'New password will be: {data["password"]}. ' \
+               f'Dont forgot again' if action == 'reset_password_confirm' else ''
     # TODO move send email to celery
     send_mail(subject=f'{action} email',
               message=f'Your {action} link: \n {url}\n' + message,
@@ -42,7 +45,7 @@ def send_updating_email(request: Request, data: dict, action: str, email: str = 
     logger.info(msg=f'Email has been send to {data["email"] if email is not None else request.data.get("email")}')
 
 
-def updating_account(uid: str, user_id: int):
+def updating_account(uid: str, user_id: int, action: str):
     """
     Func for activate account or updating fields who need confirmation
     """
@@ -50,7 +53,8 @@ def updating_account(uid: str, user_id: int):
     try:
         current_uid = Uid.objects.get(uid=uid, user_id=user_id)
         account = get_user_model().objects.get(pk=current_uid.user_id)
-        account.email = current_uid.updated_data if current_uid.updated_data is not None else account.email
+        account.email = current_uid.updated_data if action == 'update_account' else account.email
+        account.password = current_uid.updated_data if action == 'reset_password' else account.password
         account.is_active = True
         account.last_login = timezone.now()
         account.save()
