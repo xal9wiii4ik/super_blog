@@ -4,13 +4,23 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import action
 
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from apps.user_profile.models import Account
-from apps.user_profile.serializers import AccountModelSerializer, ResetPasswordSerializer
+from apps.user_profile.serializers import (
+    AccountModelSerializer,
+    ResetPasswordSerializer,
+    CustomTokenObtainPairSerializer,
+)
 from apps.user_profile.permmissions import IsAuthenticatedOrOwner
 from apps.user_profile.services_views import updating_account, send_updating_email
 
 
-# TODO override token auth(username and email auth)
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """ Custom view for token"""
+
+    serializer_class = CustomTokenObtainPairSerializer
+
 
 class UserProfileModelViewSet(ModelViewSet):
     """
