@@ -32,21 +32,20 @@ class AccountModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Account
-        fields = ('password', 'username', 'first_name', 'last_name',
+        fields = ('password', 'repeat_password', 'username', 'first_name', 'last_name',
                   'email', 'image', 'gender', 'phone', 'id', 'is_active')
 
     password = serializers.CharField(write_only=True)
-
-    # TODO move mb password from validate to validate_password and email
+    repeat_password = serializers.CharField(write_only=True)
 
     def validate(self, attrs) -> tp.Any:
         """
         Validate data of serializer
         """
 
-        if attrs.get('password') is not None:
+        if attrs.get('password') is not None and attrs.get('repeat_password') is not None:
+            validate_passwords(password=attrs['password'], repeat_password=attrs.pop('repeat_password'))
             validate_password(password=attrs['password'])
-            # TODO add field Repeat_password
             attrs['password'] = make_password(password=attrs['password'])
         if attrs.get('email') is not None:
             validate_email(email=attrs['email'], action='create_user')
