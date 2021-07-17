@@ -9,12 +9,12 @@ from django.utils import timezone
 from rest_framework.request import Request
 
 from blog import settings
-from apps.user_profile.models import Uid, Account
+from apps.user_profile.models import Uid
 
 handler = colorlog.StreamHandler()
 handler.setFormatter(colorlog.ColoredFormatter(
-    '%(log_color)s[%(asctime)s] %(levelname)s- %(message)s'))
-
+    '%(log_color)s[%(asctime)s] %(levelname)s- %(message)s')
+)
 logger = colorlog.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
@@ -26,7 +26,6 @@ def send_updating_email(request: Request, data: dict, action: str, email: str = 
     """
 
     logger.info(msg=f'creating web url for {action}')
-    # TODO check updated data (tests)
     uid_data = _create_unique_uid(user_id=data['id'],
                                   updated_data=updated_data)
     url = _current_ip_port(is_secure=request.is_secure(),
@@ -60,7 +59,7 @@ def updating_account(uid: str, user_id: int, action: str):
         account.save()
         current_uid.delete()
         logger.info(f'Account with id:{account.pk} has been updated')
-    except Uid.DoesNotExist as e:
+    except Exception as e:
         print(e)
         # TODO: add redirect to 404 page
 

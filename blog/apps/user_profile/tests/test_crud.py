@@ -79,13 +79,12 @@ class AccountApiTestCase(APITestCase):
         data = {
             'username': 'third_user',
             'password': 'third_password123123',
+            'repeat_password': 'third_password123123',
             'gender': 'male',
             'phone': '90909090901',
             'email': 'new_email@yandex.ru'
         }
-        json_data = json.dumps(data)
-        response = self.client.post(path=url, data=json_data,
-                                    content_type='application/json')
+        response = self.client.post(path=url, data=data, format='multipart')
         self.assertEqual(first=status.HTTP_201_CREATED, second=response.status_code)
         self.assertEqual(first=3, second=get_user_model().objects.all().count())
 
@@ -103,9 +102,7 @@ class AccountApiTestCase(APITestCase):
             'phone': '90909090901',
             'email': 'check@yandex.ru'
         }
-        json_data = json.dumps(data)
-        response = self.client.post(path=url, data=json_data,
-                                    content_type='application/json')
+        response = self.client.post(path=url, data=data, format='multipart')
         self.assertEqual(first=status.HTTP_400_BAD_REQUEST, second=response.status_code)
         self.assertEqual(first=2, second=get_user_model().objects.all().count())
 
@@ -119,10 +116,8 @@ class AccountApiTestCase(APITestCase):
         data = {
             'username': 'new_username',
         }
-        json_data = json.dumps(data)
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
-        response = self.client.patch(path=url, data=json_data,
-                                     content_type='application/json')
+        response = self.client.patch(path=url, data=data, format='multipart')
         self.assertEqual(first=status.HTTP_200_OK, second=response.status_code)
         self.user.refresh_from_db()
         self.assertEqual(first='new_username', second=self.user.username)
@@ -136,10 +131,8 @@ class AccountApiTestCase(APITestCase):
         data = {
             'username': 'new_username',
         }
-        json_data = json.dumps(data)
         self.client.credentials(HTTP_AUTHORIZATION=self.token_1)
-        response = self.client.patch(path=url, data=json_data,
-                                     content_type='application/json')
+        response = self.client.patch(path=url, data=data, format='multipart')
         self.assertEqual(first=status.HTTP_403_FORBIDDEN, second=response.status_code)
 
     def test_delete(self) -> None:

@@ -32,8 +32,6 @@ class UserProfileModelViewSet(ModelViewSet):
     permission_classes = (IsAuthenticatedOrOwner,)
     parser_classes = (MultiPartParser,)
 
-    # TODO update tests
-
     def partial_update(self, request, *args, **kwargs) -> Response:
         request.data._mutable = True
         if request.data.get('email') is not None:
@@ -48,6 +46,7 @@ class UserProfileModelViewSet(ModelViewSet):
         return Response(data=response.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs) -> Response:
+        request.data._mutable = True
         request.data['is_active'] = False
         response = super(UserProfileModelViewSet, self).create(request, *args, **kwargs)
         send_updating_email(request=request, data=response.data, action='activate_account')

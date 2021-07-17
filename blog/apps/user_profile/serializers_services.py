@@ -10,7 +10,6 @@ def validate_email(email: str, action: str) -> int or None:
 
     try:
         account = Account.objects.get(email=email)
-        # TODO check this with tests
         if action == 'create_user':
             raise ValidationError('email exist')
         return account.id

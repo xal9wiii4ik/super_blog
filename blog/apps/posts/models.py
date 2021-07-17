@@ -16,7 +16,7 @@ def save_picture(image: tp.IO):
     # TODO format
     if (img.size[0] < SIZE[0]) or (img.size[-1] < SIZE[-1]):
         # TODO exception
-        raise Exception('size')
+        raise Exception('Bad size (models.Model)')
     else:
         os.remove(path=f'images/{name}')
         # TODO rename
@@ -52,6 +52,7 @@ class Post(models.Model):
     title: str = models.CharField(max_length=100, verbose_name='title')
     description: str = models.TextField(verbose_name='description')
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
+    # TODO check in db
     published_date: datetime = models.DateTimeField(auto_now_add=True, null=True)
 
     # TODO change upload path
