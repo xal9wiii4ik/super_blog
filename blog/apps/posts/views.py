@@ -1,3 +1,4 @@
+from rest_framework.parsers import MultiPartParser
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
 
@@ -14,6 +15,7 @@ class PostModelViewSet(ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostModelSerializer
     permission_classes = (IsOwnerOrReadOnly,)
+    parser_classes = (MultiPartParser,)
 
     def perform_create(self, serializer) -> None:
         serializer.validated_data['owner'] = self.request.user

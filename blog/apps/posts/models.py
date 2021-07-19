@@ -6,21 +6,42 @@ from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
 SIZE = (800, 768)
 
 
+def rename_upload_path(image_name: str, username: str, txt: str) -> str:
+    """ Rename upload path of image(set unique)
+
+    Args:
+        image_name: image name
+        username: username
+        txt: unique field
+    Returns:
+        new image name
+    """
+
+    time = timezone.now().strftime("%d-%m-%Y-%H-%S")
+    image_extension = image_name.split('.')[-1]
+    rename = username + '/' + str(txt) + ':' + time + '.' + image_extension
+    return os.path.join(rename)
+
+
 def save_picture(image: tp.IO):
+    """ Optimize picture
+
+    Args:
+        image: image
+    """
+
     img = Image.open(image)
     name = image.name
     format = name.split('.')[-1]
-    # TODO format
     if (img.size[0] < SIZE[0]) or (img.size[-1] < SIZE[-1]):
-        # TODO exception
         raise Exception('Bad size (models.Model)')
     else:
         os.remove(path=f'images/{name}')
-        # TODO rename
         img.save(f'images/{name}', format=format, quality=50)
 
 
@@ -50,10 +71,9 @@ class Post(models.Model):
                                            on_delete=models.SET_NULL,
                                            null=True,
                                            related_name='post_category')
-    title: str = models.CharField(max_length=100, verbose_name='title')
+    title: str = models.CharField(max_length=100, verbose_name='title', unique=True)
     description: str = models.TextField(verbose_name='description')
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
-    # TODO check in db
     published_date: datetime = models.DateTimeField(auto_now_add=True, null=True)
     owner: get_user_model() = models.ForeignKey(to=get_user_model(),
                                                 on_delete=models.SET_NULL,
@@ -61,15 +81,11 @@ class Post(models.Model):
                                                 verbose_name='owner',
                                                 related_name='post_owner')
 
-    # TODO change upload path
-    # image: quality: 50; size: (800, 768);
-
     def save(self, *args, **kwargs) -> tp.Any:
-        super().save(*args, **kwargs)
-        if self.image is not None:
-            save_picture(image=self.image)
-
-    def save(self, *args, **kwargs) -> tp.Any:
+        if self.image:
+            self.image.name = rename_upload_path(username=self.owner.username,
+                                                 image_name=self.image.name,
+                                                 txt=self.title)
         super().save(*args, **kwargs)
         if self.image._file is not None:
             save_picture(image=self.image)

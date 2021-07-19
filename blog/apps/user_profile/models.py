@@ -1,10 +1,9 @@
 import typing as tp
-from datetime import datetime
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from apps.posts.models import save_picture
+from apps.posts.models import save_picture, rename_upload_path
 
 
 class Uid(models.Model):
@@ -39,14 +38,16 @@ class Account(AbstractUser):
     ]
 
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
-    # TODO add optimize images; rename path
     gender: str = models.CharField(max_length=6, choices=GENDER_CHOICES, verbose_name='gender')
     phone: str = models.CharField(max_length=26, verbose_name='phone')
 
     def save(self, *args, **kwargs) -> tp.Any:
+        if self.image:
+            self.image.name = rename_upload_path(username=self.username,
+                                                 image_name=self.image.name,
+                                                 txt=self.email)
         super().save(*args, **kwargs)
         if self.image._file is not None:
-            print(1)
             save_picture(image=self.image)
 
     def __str__(self) -> str:

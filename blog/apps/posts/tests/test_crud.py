@@ -185,10 +185,8 @@ class PostApiTestCase(APITestCase):
             'description': 'description',
             'category': self.category.pk
         }
-        json_data = json.dumps(data)
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
-        response = self.client.post(path=url, data=json_data,
-                                    content_type='application/json')
+        response = self.client.post(path=url, data=data, format='multipart')
         self.assertEqual(first=status.HTTP_201_CREATED, second=response.status_code)
         self.assertEqual(first=Post.objects.all().count(), second=3)
 
@@ -255,10 +253,8 @@ class PostApiTestCase(APITestCase):
         data = {
             'title': 'new title'
         }
-        json_data = json.dumps(data)
         self.client.credentials(HTTP_AUTHORIZATION=self.token)
-        response = self.client.patch(path=url, data=json_data,
-                                     content_type='application/json')
+        response = self.client.patch(path=url, data=data, format='multipart')
         self.assertEqual(first=status.HTTP_200_OK, second=response.status_code)
         self.post.refresh_from_db()
         self.assertEqual(first=self.post.title, second='new title')
