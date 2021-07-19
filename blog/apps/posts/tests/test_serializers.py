@@ -55,7 +55,8 @@ class SerializerTestCase(TestCase):
                 'description': 'description for first post',
                 'image': None,
                 'published_date': self.post.published_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                'category': self.category_1.pk
+                'category': self.category_1.pk,
+                'owner': None,
             },
             {
                 'id': self.post_1.pk,
@@ -63,7 +64,8 @@ class SerializerTestCase(TestCase):
                 'description': 'this is description for second post',
                 'image': None,
                 'published_date': self.post_1.published_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                'category': self.category.pk
+                'category': self.category.pk,
+                'owner': None,
             }
         ]
         self.assertEqual(first=data, second=expected_data)
