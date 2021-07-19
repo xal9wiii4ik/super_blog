@@ -4,6 +4,7 @@ import os
 from PIL import Image
 from datetime import datetime
 
+from django.contrib.auth import get_user_model
 from django.db import models
 
 SIZE = (800, 768)
@@ -54,6 +55,11 @@ class Post(models.Model):
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
     # TODO check in db
     published_date: datetime = models.DateTimeField(auto_now_add=True, null=True)
+    owner: get_user_model() = models.ForeignKey(to=get_user_model(),
+                                                on_delete=models.SET_NULL,
+                                                null=True,
+                                                verbose_name='owner',
+                                                related_name='post_owner')
 
     # TODO change upload path
 
