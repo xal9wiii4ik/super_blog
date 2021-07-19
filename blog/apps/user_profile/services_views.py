@@ -3,12 +3,11 @@ import colorlog
 import logging
 
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.utils import timezone
 
 from rest_framework.request import Request
 
-from blog import settings
+from apps.user_profile.tasks.tasks import send_email_task
 from apps.user_profile.models import Uid
 
 handler = colorlog.StreamHandler()
@@ -31,37 +30,9 @@ def send_updating_email(request: Request, data: dict, action: str, email: str = 
     url = _current_ip_port(is_secure=request.is_secure(),
                            host=request.get_host(),
                            url=f'/api/account/{action}/{uid_data["uid"]}/{uid_data["user_id"]}')
-    logger.info(msg=f'sending email with {action}')
-    message = f'Your new email: {email}' if email is not None else ''
-    message += f'New password will be: {data["password"]}. ' \
-               f'Dont forgot again' if action == 'reset_password_confirm' else ''
-    # TODO move send email to celery
-    send_mail(subject=f'{action} email',
-              message=f'Your {action} link: \n {url}\n' + message,
-              from_email=settings.EMAIL_HOST_USER,
-              recipient_list=[data['email'] if email is not None else request.data.get('email')],
-              fail_silently=False)
-    logger.info(msg=f'Email has been send to {data["email"] if email is not None else request.data.get("email")}')
-
-
-def updating_account(uid: str, user_id: int, action: str):
-    """
-    Func for activate account or updating fields who need confirmation
-    """
-
-    try:
-        current_uid = Uid.objects.get(uid=uid, user_id=user_id)
-        account = get_user_model().objects.get(pk=current_uid.user_id)
-        account.email = current_uid.updated_data if action == 'update_account' else account.email
-        account.password = current_uid.updated_data if action == 'reset_password' else account.password
-        account.is_active = True
-        account.last_login = timezone.now()
-        account.save()
-        current_uid.delete()
-        logger.info(f'Account with id:{account.pk} has been updated')
-    except Exception as e:
-        print(e)
-        # TODO: add redirect to 404 page
+    logger.info(f'Move send email with action: {action} to celery task')
+    request.data.pop('image', None)
+    send_email_task.delay(data=data, action=action, url=url, request_data=request.data, email=email)
 
 
 def _create_unique_uid(user_id: int, updated_data: str = None) -> dict:

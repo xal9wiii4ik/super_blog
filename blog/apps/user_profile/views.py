@@ -13,7 +13,8 @@ from apps.user_profile.serializers import (
     CustomTokenObtainPairSerializer,
 )
 from apps.user_profile.permmissions import IsAuthenticatedOrOwner
-from apps.user_profile.services_views import updating_account, send_updating_email
+from apps.user_profile.services_views import send_updating_email
+from apps.user_profile.tasks.tasks import updating_account_task
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -46,8 +47,10 @@ class UserProfileModelViewSet(ModelViewSet):
         return Response(data=response.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs) -> Response:
-        request.data._mutable = True
-        request.data['is_active'] = False
+        print(len(request.data))
+        if len(request.data) > 0:
+            request.data._mutable = True
+            request.data['is_active'] = False
         response = super(UserProfileModelViewSet, self).create(request, *args, **kwargs)
         send_updating_email(request=request, data=response.data, action='activate_account')
         return response
@@ -73,8 +76,10 @@ class UserProfileModelViewSet(ModelViewSet):
         Url for update fields in account(email)
         """
 
-        updating_account(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']), action='update_account')
-        return Response(data={'ok': 'user has been updated successfully'}, status=status.HTTP_200_OK)
+        data = updating_account_task.delay(uid=str(kwargs['uid']),
+                                           user_id=int(kwargs['user_id']),
+                                           action='update_account').get()
+        return Response(data=data, status=status.HTTP_200_OK)
 
     @action(detail=False,
             methods=['POST'],
@@ -100,6 +105,7 @@ class UserProfileModelViewSet(ModelViewSet):
             permission_classes=[permissions.AllowAny],
             url_path=r'reset_password_confirm/(?P<uid>\w+)/(?P<user_id>\d+)')
     def reset_password_confirm(self, request, *args, **kwargs) -> Response:
-        updating_account(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']), action='reset_password')
-        return Response(data={'ok': 'Password has been updated successfully'}, status=status.HTTP_200_OK)
-
+        data = updating_account_task.delay(uid=str(kwargs['uid']),
+                                           user_id=int(kwargs['user_id']),
+                                           action='reset_password').get()
+        return Response(data=data, status=status.HTTP_200_OK)
