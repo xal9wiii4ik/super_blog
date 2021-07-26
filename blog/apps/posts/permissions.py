@@ -17,7 +17,7 @@ class ReadOnly(BasePermission):
         )
 
 
-class IsOwnerOrReadOnly(BasePermission):
+class IsOwnerOrAuthorizedOrReadOnly(BasePermission):
     """
     Permission for Owner or Read only
     """

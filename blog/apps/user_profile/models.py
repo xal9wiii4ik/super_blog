@@ -1,9 +1,10 @@
+import os
 import typing as tp
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from apps.posts.models import save_picture, rename_upload_path
+from apps.posts.services_models import rename_upload_path, save_picture
 
 
 class Uid(models.Model):
@@ -50,5 +51,9 @@ class Account(AbstractUser):
         if self.image._file is not None:
             save_picture(image=self.image)
 
+    def delete(self, using=None, keep_parents=False):
+        os.remove(path=f'images/{self.image.name}')
+        super().delete(using, keep_parents)
+
     def __str__(self) -> str:
-        return f'pk: {self.pk}, username: {self.username}, email: {self.email}'
+        return f'pk: {self.pk}, username: {self.username}, email: {self.email} path: {self.image.name}'
