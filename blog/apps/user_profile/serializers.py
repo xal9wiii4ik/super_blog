@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from apps.user_profile.models import Account
+from apps.user_profile.models import Account, TelegramChat
 from apps.user_profile.serializers_services import validate_email, validate_passwords
 
 
@@ -51,6 +51,16 @@ class AccountModelSerializer(serializers.ModelSerializer):
             validate_email(email=attrs['email'], action='create_user')
         data = super(AccountModelSerializer, self).validate(attrs)
         return data
+
+
+class TelegramChatModelSerializer(serializers.ModelSerializer):
+    """
+    Model serializer for model TelegramChat
+    """
+
+    class Meta:
+        model = TelegramChat
+        fields = '__all__'
 
 
 class ResetPasswordSerializer(serializers.Serializer):

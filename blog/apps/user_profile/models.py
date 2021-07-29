@@ -1,6 +1,7 @@
 import os
 import typing as tp
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -57,3 +58,18 @@ class Account(AbstractUser):
 
     def __str__(self) -> str:
         return f'pk: {self.pk}, username: {self.username}, email: {self.email} path: {self.image.name}'
+
+
+class TelegramChat(models.Model):
+    """
+    Model for telegram chat
+    """
+
+    class Meta:
+        db_table = 'telegram_chat'
+
+    chat_id = models.CharField(max_length=50, verbose_name='telegram chat id')
+    owner = models.OneToOneField(to=get_user_model(), related_name='owner_telegram_chat', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'pk: {self.pk}, owner_id: {self.owner.id}, chat_id: {self.chat_id}'

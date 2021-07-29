@@ -11,6 +11,7 @@ from apps.user_profile.serializers import (
     AccountModelSerializer,
     ResetPasswordSerializer,
     CustomTokenObtainPairSerializer,
+    TelegramChatModelSerializer,
 )
 from apps.user_profile.permmissions import IsAuthenticatedOrOwner
 from apps.user_profile.services_views import send_updating_email
