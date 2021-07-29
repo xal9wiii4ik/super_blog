@@ -1,11 +1,15 @@
+from rest_framework import status
 from rest_framework.parsers import MultiPartParser
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
 
 from apps.posts.permissions import IsOwnerOrAuthorizedOrReadOnly, ReadOnly
 from apps.posts.serializers import PostModelSerializer, CategoryModelSerializer
 from apps.posts.models import Post, Category
-from apps.posts.services_views import save_pictures, update_pictures
+from apps.posts.services_views import save_pictures, update_pictures, get_posts_filters, get_post_fields_by_filters
 
 
 class PostModelViewSet(ModelViewSet):
@@ -33,6 +37,21 @@ class PostModelViewSet(ModelViewSet):
     def perform_create(self, serializer) -> None:
         serializer.validated_data['owner'] = self.request.user
         serializer.save()
+
+
+class PostFilters(APIView):
+    """
+    View for post filters
+    """
+
+    def get(self, request: Request) -> Response:
+        data = get_posts_filters()
+        return Response(data=data, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        data = get_post_fields_by_filters(data=request.data)
+        data = {'none': 'No posts were found for the specified filters'} if len(data) == 0 else data
+        return Response(data=data, status=status.HTTP_200_OK)
 
 
 class CategoryViewSet(ListModelMixin,
