@@ -2,12 +2,9 @@ import uuid
 import colorlog
 import logging
 
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-
 from rest_framework.request import Request
 
-from apps.user_profile.tasks.tasks import send_email_task
+from apps.user_profile.tasks.tasks import send_email_task, send_telegram_message
 from apps.user_profile.models import Uid
 
 handler = colorlog.StreamHandler()
@@ -33,6 +30,10 @@ def send_updating_email(request: Request, data: dict, action: str, email: str = 
     logger.info(f'Move send email with action: {action} to celery task')
     request.data.pop('image', None)
     send_email_task.delay(data=data, action=action, url=url, request_data=request.data, email=email)
+    if request.data.get('telegram_chat_id'):
+        send_telegram_message.delay(chat_id=request.data['telegram_chat_id'],
+                                    message='This is your personal chat, you will receive '
+                                            'messages in this chat with new posts(if you have subscriptions).')
 
 
 def _create_unique_uid(user_id: int, updated_data: str = None) -> dict:

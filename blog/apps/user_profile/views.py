@@ -11,11 +11,10 @@ from apps.user_profile.serializers import (
     AccountModelSerializer,
     ResetPasswordSerializer,
     CustomTokenObtainPairSerializer,
-    TelegramChatModelSerializer,
 )
 from apps.user_profile.permmissions import IsAuthenticatedOrOwner
 from apps.user_profile.services_views import send_updating_email
-from apps.user_profile.tasks.tasks import updating_account_task
+from apps.user_profile.tasks.tasks import updating_account_task, send_telegram_message
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -44,11 +43,14 @@ class UserProfileModelViewSet(ModelViewSet):
                                 action='update_account',
                                 email=email[0],
                                 updated_data=email[0])
+        if request.data.get('telegram_chat_id'):
+            send_telegram_message.delay(chat_id=request.data['telegram_chat_id'],
+                                        message='This is your personal chat, you will receive '
+                                                'messages in this chat with new posts(if you have subscriptions).')
         response = super(UserProfileModelViewSet, self).partial_update(request, *args, **kwargs)
         return Response(data=response.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs) -> Response:
-        print(len(request.data))
         if len(request.data) > 0:
             request.data._mutable = True
             request.data['is_active'] = False
@@ -65,7 +67,7 @@ class UserProfileModelViewSet(ModelViewSet):
         Url for activate account
         """
 
-        updating_account(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']), action='activate_account')
+        updating_account_task.delay(uid=str(kwargs['uid']), user_id=int(kwargs['user_id']), action='activate_account')
         return Response(data={'ok': 'email has been updated successfully'}, status=status.HTTP_200_OK)
 
     @action(detail=False,

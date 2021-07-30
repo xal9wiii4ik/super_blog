@@ -1,5 +1,7 @@
 import colorlog
 import logging
+import requests
+import json
 
 from celery import shared_task
 
@@ -40,8 +42,13 @@ def send_email_task(data: dict, action: str, url: str, request_data: dict, email
 
 @shared_task
 def updating_account_task(uid: str, user_id: int, action: str) -> dict:
-    """
-    Func for activate account or updating fields who need confirmation
+    """ Func for activate account or updating fields who need confirmation
+    Args:
+        uid: uid,
+        user_id: user_id,
+        action: action
+    Returns:
+        dict with success message
     """
 
     from apps.user_profile.models import Uid
@@ -62,3 +69,32 @@ def updating_account_task(uid: str, user_id: int, action: str) -> dict:
     current_uid.delete()
     logger.info(f'Account with id:{account.pk} has been updated')
     return {'ok': 'Account has been updated successfully'}
+
+
+@shared_task
+def send_telegram_message(chat_id: str, message: str, group_type: str = None) -> None:
+    """ Sending telegram message to user chat or to group with success or error
+    Args:
+        chat_id: chat id
+        message: telegram message
+        group_type: success or error
+    """
+
+    from apps.user_profile.models import TelegramGroup
+    from blog.settings import BOT_TOKEN
+
+    message_url = f'https://api.telegram.org/bot{BOT_TOKEN}' \
+                  f'/sendMessage?chat_id={chat_id}&text={message}'
+
+    if group_type != '':
+        chats = TelegramGroup.objects.filter(group_type=group_type)
+        for chat in chats:
+            url = f'https://api.telegram.org/bot{BOT_TOKEN}' \
+                  f'/sendMessage?chat_id={chat.group_id}&text={message}'
+            response = requests.post(url=url)
+    else:
+        response = requests.post(url=message_url)
+
+    if response.status_code != 200:
+        description = json.loads(response.content)
+        logging.info(f'Bad request(send message to user in telegram) {description["description"]}')

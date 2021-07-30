@@ -42,12 +42,14 @@ class Account(AbstractUser):
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
     gender: str = models.CharField(max_length=6, choices=GENDER_CHOICES, verbose_name='gender')
     phone: str = models.CharField(max_length=26, verbose_name='phone')
+    telegram_chat_id: str = models.CharField(max_length=50, verbose_name='telegram chat id', null=True, blank=True)
 
     def save(self, *args, **kwargs) -> tp.Any:
         if self.image:
             self.image.name = rename_upload_path(username=self.username,
                                                  image_name=self.image.name,
                                                  txt=self.email)
+        # TODO     if add telegram send message to telegram
         super().save(*args, **kwargs)
         if self.image._file is not None:
             save_picture(image=self.image)
@@ -60,16 +62,21 @@ class Account(AbstractUser):
         return f'pk: {self.pk}, username: {self.username}, email: {self.email} path: {self.image.name}'
 
 
-class TelegramChat(models.Model):
+class TelegramGroup(models.Model):
     """
-    Model for telegram chat
+    Model for telegram group(logging)
     """
 
     class Meta:
-        db_table = 'telegram_chat'
+        db_table = 'telegram_group'
 
-    chat_id = models.CharField(max_length=50, verbose_name='telegram chat id')
-    owner = models.OneToOneField(to=get_user_model(), related_name='owner_telegram_chat', on_delete=models.CASCADE)
+    group_id: str = models.CharField(max_length=50, verbose_name='telegram group id')
+    group_type: str = models.CharField(max_length=10, verbose_name='type of telegram group')
+    users: get_user_model() = models.ManyToManyField(to=get_user_model(),
+                                                     related_name='user_telegram_group')
 
-    def __str__(self):
-        return f'pk: {self.pk}, owner_id: {self.owner.id}, chat_id: {self.chat_id}'
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f'id: {self.pk}, group_id: {self.group_id}'
