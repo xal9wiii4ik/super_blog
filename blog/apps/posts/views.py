@@ -10,6 +10,7 @@ from apps.posts.permissions import IsOwnerOrAuthorizedOrReadOnly, ReadOnly
 from apps.posts.serializers import PostModelSerializer, CategoryModelSerializer
 from apps.posts.models import Post, Category
 from apps.posts.services_views import save_pictures, update_pictures, get_posts_filters, get_post_fields_by_filters
+from apps.posts.tasks.tasks import mail_posts_to_subscribers
 
 
 class PostModelViewSet(ModelViewSet):
@@ -24,8 +25,15 @@ class PostModelViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         response = super(PostModelViewSet, self).create(request, *args, **kwargs)
+        files = []
         if request.FILES:
-            save_pictures(files=self.request.FILES.pop('images'), post_id=response.data.get('id'))
+            files = self.request.FILES.pop('images')
+            save_pictures(files=files, post_id=response.data.get('id'))
+        if len(request.user.subscribers_owner.subscribers.all()) > 0:
+            mail_posts_to_subscribers.delay(
+                post_data=response.data,
+                owner_id=request.user.id,
+                files=files if len(files) > 0 else None)
         return response
 
     def partial_update(self, request, *args, **kwargs):

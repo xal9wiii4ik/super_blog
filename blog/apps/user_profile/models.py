@@ -42,7 +42,11 @@ class Account(AbstractUser):
     image: tp.IO = models.ImageField(verbose_name='image', upload_to='', null=True, blank=True)
     gender: str = models.CharField(max_length=6, choices=GENDER_CHOICES, verbose_name='gender')
     phone: str = models.CharField(max_length=26, verbose_name='phone')
-    telegram_chat_id: str = models.CharField(max_length=50, verbose_name='telegram chat id', null=True, blank=True)
+    telegram_chat_id: str = models.CharField(max_length=50,
+                                             verbose_name='telegram chat id',
+                                             unique=True,
+                                             null=True,
+                                             blank=True)
 
     def save(self, *args, **kwargs) -> tp.Any:
         if self.image:
@@ -72,11 +76,31 @@ class TelegramGroup(models.Model):
 
     group_id: str = models.CharField(max_length=50, verbose_name='telegram group id')
     group_type: str = models.CharField(max_length=10, verbose_name='type of telegram group')
-    users: get_user_model() = models.ManyToManyField(to=get_user_model(),
-                                                     related_name='user_telegram_group')
+    users: tp.List[get_user_model()] = models.ManyToManyField(to=get_user_model(),
+                                                              related_name='user_telegram_group')
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f'id: {self.pk}, group_id: {self.group_id}'
+
+
+class UserSubscriber(models.Model):
+    """
+    Model for user subscriber
+    """
+
+    class Meta:
+        db_table = 'user_subscriber'
+
+    owner: get_user_model() = models.OneToOneField(to=get_user_model(),
+                                                   on_delete=models.CASCADE,
+                                                   related_name='subscribers_owner')
+    subscribers: tp.List[get_user_model()] = models.ManyToManyField(to=get_user_model(),
+                                                                    related_name='subscriber_users',
+                                                                    blank=True)
+
+    def __str__(self) -> str:
+        #         TODO check list subscribers to str
+        return f'id: {self.pk}'

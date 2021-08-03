@@ -3,13 +3,14 @@ import os
 import typing as tp
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 
 from apps.posts.models import PostImages, Post, Category
 from apps.posts.serializers import PostModelSerializer
 
 
-def save_pictures(post_id: int, files: tp.List[tp.IO]):
+def save_pictures(post_id: int, files: tp.List[InMemoryUploadedFile]):
     """ Func for saving pictures in database
 
     Args:

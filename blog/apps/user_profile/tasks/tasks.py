@@ -2,8 +2,10 @@ import colorlog
 import logging
 import requests
 import json
+import typing as tp
 
 from celery import shared_task
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 handler = colorlog.StreamHandler()
 handler.setFormatter(colorlog.ColoredFormatter(
@@ -72,12 +74,16 @@ def updating_account_task(uid: str, user_id: int, action: str) -> dict:
 
 
 @shared_task
-def send_telegram_message(chat_id: str, message: str, group_type: str = None) -> None:
+def send_telegram_message(message: str,
+                          group_type: str = None,
+                          chat_id: str = None,
+                          files: tp.Union[tp.List[InMemoryUploadedFile]] = None) -> None:
     """ Sending telegram message to user chat or to group with success or error
     Args:
         chat_id: chat id
         message: telegram message
         group_type: success or error
+        files: list with files
     """
 
     from apps.user_profile.models import TelegramGroup
@@ -85,8 +91,7 @@ def send_telegram_message(chat_id: str, message: str, group_type: str = None) ->
 
     message_url = f'https://api.telegram.org/bot{BOT_TOKEN}' \
                   f'/sendMessage?chat_id={chat_id}&text={message}'
-
-    if group_type != '':
+    if group_type is not None:
         chats = TelegramGroup.objects.filter(group_type=group_type)
         for chat in chats:
             url = f'https://api.telegram.org/bot{BOT_TOKEN}' \
@@ -94,7 +99,42 @@ def send_telegram_message(chat_id: str, message: str, group_type: str = None) ->
             response = requests.post(url=url)
     else:
         response = requests.post(url=message_url)
+        image_url = f'https://api.telegram.org/bot{BOT_TOKEN}' \
+                    f'/sendPhoto?chat_id={chat_id}'
+        if files is not None:
+            for file in files:
+                data = {'files': {'photo': file.open()}}
+                response = requests.post(url=image_url, **data)
 
     if response.status_code != 200:
+        print(response.json())
         description = json.loads(response.content)
         logging.info(f'Bad request(send message to user in telegram) {description["description"]}')
+
+
+@shared_task
+def update_subscribers(subscribers: tp.List[int], pk: int) -> tp.List[int]:
+    """ Update subscribers getting dict with data from request and return new dict
+    Args:
+        subscribers: list with subscribers
+        pk: UserSubscriber pk
+    Returns:
+        Dict with new data
+    """
+
+    from apps.user_profile.models import UserSubscriber
+
+    try:
+        user_subscribers = UserSubscriber.objects.get(id=pk)
+        for user_subscriber in user_subscribers.subscribers.all():
+            subscribers.append(user_subscriber.pk)
+        if user_subscribers.owner.pk in subscribers:
+            subscribers.remove(user_subscribers.owner.pk)
+        if user_subscribers.owner.telegram_chat_id is not None \
+                and len(set(subscribers)) > len(user_subscribers.subscribers.all()):
+            send_telegram_message.delay(message='Congratulations you have 1 new subscriber',
+                                        chat_id=user_subscribers.owner.telegram_chat_id)
+        return subscribers
+    except Exception as e:
+        logger.warning(msg=f'Error in func update_subscribers {str(e)}')
+        return []

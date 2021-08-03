@@ -1,20 +1,21 @@
-from rest_framework import status, permissions
+from rest_framework import status, permissions, mixins
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.parsers import MultiPartParser
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.parsers import MultiPartParser, JSONParser
 from rest_framework.decorators import action
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from apps.user_profile.models import Account
+from apps.user_profile.models import Account, UserSubscriber
 from apps.user_profile.serializers import (
     AccountModelSerializer,
     ResetPasswordSerializer,
     CustomTokenObtainPairSerializer,
+    UserSubscriberModelSerializer,
 )
-from apps.user_profile.permmissions import IsAuthenticatedOrOwner
+from apps.user_profile.permmissions import IsAuthenticatedOrOwner, IsAuthenticatedAndNotOwner
 from apps.user_profile.services_views import send_updating_email
-from apps.user_profile.tasks.tasks import updating_account_task, send_telegram_message
+from apps.user_profile.tasks.tasks import updating_account_task, send_telegram_message, update_subscribers
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -112,3 +113,22 @@ class UserProfileModelViewSet(ModelViewSet):
                                            user_id=int(kwargs['user_id']),
                                            action='reset_password').get()
         return Response(data=data, status=status.HTTP_200_OK)
+
+
+class UserSubscriberModelViewSet(mixins.UpdateModelMixin,
+                                 mixins.RetrieveModelMixin,
+                                 GenericViewSet):
+    """
+    Model View Set for model UserSubscriber
+    """
+
+    queryset = UserSubscriber.objects.all()
+    serializer_class = UserSubscriberModelSerializer
+    permission_classes = (IsAuthenticatedAndNotOwner,)
+    parser_classes = (JSONParser,)
+
+    def partial_update(self, request, *args, **kwargs) -> Response:
+        request.data['subscribers'] = update_subscribers.delay(subscribers=request.data['subscribers'],
+                                                               pk=int(kwargs['pk'])).get()
+        response = super(UserSubscriberModelViewSet, self).partial_update(request, *args, **kwargs)
+        return Response(data=response.data, status=status.HTTP_200_OK)

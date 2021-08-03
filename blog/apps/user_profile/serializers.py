@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from apps.user_profile.models import Account, TelegramGroup
+from apps.user_profile.models import Account, UserSubscriber
 from apps.user_profile.serializers_services import validate_email, validate_passwords
 
 
@@ -33,7 +33,7 @@ class AccountModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ('password', 'repeat_password', 'username', 'first_name', 'last_name',
-                  'email', 'image', 'gender', 'phone', 'id', 'is_active')
+                  'email', 'image', 'gender', 'phone', 'id', 'is_active', 'telegram_chat_id')
 
     password = serializers.CharField(write_only=True)
     repeat_password = serializers.CharField(write_only=True)
@@ -51,6 +51,17 @@ class AccountModelSerializer(serializers.ModelSerializer):
             validate_email(email=attrs['email'], action='create_user')
         data = super(AccountModelSerializer, self).validate(attrs)
         return data
+
+
+class UserSubscriberModelSerializer(serializers.ModelSerializer):
+    """
+    Model serializer for model UserSubscriber
+    """
+
+    class Meta:
+        model = UserSubscriber
+        fields = '__all__'
+        extra_kwargs = {'owner': {'read_only': True}}
 
 
 class ResetPasswordSerializer(serializers.Serializer):

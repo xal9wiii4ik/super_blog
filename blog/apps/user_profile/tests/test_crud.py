@@ -7,7 +7,8 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
-from apps.user_profile.serializers import AccountModelSerializer
+from apps.user_profile.serializers import AccountModelSerializer, UserSubscriberModelSerializer
+from apps.user_profile.models import UserSubscriber
 
 
 class AccountApiTestCase(APITestCase):
@@ -156,3 +157,85 @@ class AccountApiTestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=self.token_1)
         response = self.client.delete(path=url)
         self.assertEqual(first=status.HTTP_403_FORBIDDEN, second=response.status_code)
+
+
+class UserSubscriberApiTestCase(APITestCase):
+    """
+    Api test for UserSubscriber
+    """
+
+    def setUp(self) -> None:
+        password = make_password('password')
+        url = reverse('token')
+
+        self.user = get_user_model().objects.create(username='first user',
+                                                    password=password,
+                                                    gender='male',
+                                                    phone='12312321',
+                                                    email='check@yandex.ru',
+                                                    is_active=True)
+        data = {
+            'username': self.user.username,
+            'password': 'password'
+        }
+        json_data = json.dumps(data)
+        self.token = f"Token " \
+                     f"{self.client.post(path=url, data=json_data, content_type='application/json').data['access']}"
+
+        self.user_1 = get_user_model().objects.create(username='second user',
+                                                      password=password,
+                                                      gender='female',
+                                                      phone='87878127',
+                                                      is_active=True)
+        data_1 = {
+            'username': self.user_1.username,
+            'password': 'password'
+        }
+        json_data_1 = json.dumps(data_1)
+        self.token_1 = f"Token " \
+                       f"{self.client.post(path=url, data=json_data_1, content_type='application/json').data['access']}"
+        self.subscriber = UserSubscriber.objects.create(owner=self.user)
+        self.subscriber.subscribers.set([self.user_1])
+        self.subscriber_1 = UserSubscriber.objects.create(owner=self.user_1)
+
+    def test_get_retrieve(self) -> None:
+        """
+        test for getting user subscribers
+        """
+
+        url = reverse('user_profile:usersubscriber-detail', args=(self.user.pk,))
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        response = self.client.get(path=url)
+        self.assertEqual(first=status.HTTP_200_OK, second=response.status_code)
+
+    def test_update_owner(self) -> None:
+        """
+        test for updating subscribers owner
+        """
+
+        url = reverse('user_profile:usersubscriber-detail', args=(self.user.pk,))
+        self.client.credentials(HTTP_AUTHORIZATION=self.token)
+        data = {
+            'subscribers': [self.user.pk]
+        }
+        json_data = json.dumps(data)
+        response = self.client.put(path=url, data=json_data, content_type='application/json')
+        self.assertEqual(first=status.HTTP_403_FORBIDDEN, second=response.status_code)
+
+    def test_update_not_owner(self) -> None:
+        """
+        test for updating subscribers not owner
+        """
+
+        self.assertEqual(first=1, second=self.subscriber.subscribers.all().count())
+        url = reverse('user_profile:usersubscriber-detail', args=(self.user.pk,))
+        self.client.credentials(HTTP_AUTHORIZATION=self.token_1)
+        data = {
+            'subscribers': [self.user_1.pk]
+        }
+        json_data = json.dumps(data)
+        response = self.client.put(path=url, data=json_data, content_type='application/json')
+        print(response.data)
+        self.assertEqual(first=status.HTTP_200_OK, second=response.status_code)
+        self.subscriber.refresh_from_db()
+        self.assertEqual(first=1, second=self.subscriber.subscribers.all().count())

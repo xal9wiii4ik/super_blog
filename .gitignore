@@ -10,3 +10,4 @@
 /blog/images
 /blog/db.sqlite3
 .env
+/blog/for_delete.py
