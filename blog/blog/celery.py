@@ -17,7 +17,7 @@ celery_app.autodiscover_tasks(TASKS_FILES, force=True)
 celery_app.conf.beat_schedule = {
     'delete-inactive-users': {
         'task': 'users.delete-inactive-users',
-        'schedule': 15.0
+        'schedule': 3600 * 48
     }
 }
 
