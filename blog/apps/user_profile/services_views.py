@@ -55,8 +55,11 @@ def send_updating_email(request: Request, data: dict, action: str, email: str = 
 def _create_unique_uid(user_id: int, updated_data: str = None) -> dict:
     """
     Generating new uid and save in the db
-    :param user_id:
-    :return: dict with uid and user_id
+    Args:
+        user_id: user id
+        updated_data: dict with updated data
+    Returns:
+        dict with uid
     """
 
     uid = Uid.objects.create(uid=uuid.uuid1(), user_id=user_id)

@@ -11,3 +11,4 @@
 /blog/db.sqlite3
 .env
 /blog/for_delete.py
+/blog/celerybeat-schedule.db

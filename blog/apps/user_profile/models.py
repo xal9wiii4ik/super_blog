@@ -53,7 +53,6 @@ class Account(AbstractUser):
             self.image.name = rename_upload_path(username=self.username,
                                                  image_name=self.image.name,
                                                  txt=self.email)
-        # TODO     if add telegram send message to telegram
         super().save(*args, **kwargs)
         if self.image._file is not None:
             save_picture(image=self.image)

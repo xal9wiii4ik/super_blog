@@ -4,7 +4,10 @@ import requests
 import json
 import typing as tp
 
+from datetime import datetime
+
 from celery import shared_task
+
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 handler = colorlog.StreamHandler()
@@ -17,7 +20,12 @@ logger.addHandler(handler)
 
 
 @shared_task
-def send_email_task(data: dict, action: str, url: str, request_data: dict, email: str = None) -> None:
+def send_email_task(data: dict,
+                    action: str,
+                    url: str = None,
+                    request_data: dict = None,
+                    email: str = None,
+                    inactive_message: str = None) -> None:
     """ Sending mail with action
     Args:
         data: dict with account data
@@ -25,6 +33,7 @@ def send_email_task(data: dict, action: str, url: str, request_data: dict, email
         url: url
         request_data: dict with request data
         email: email
+        inactive_message: if action delete inactive users we use inactive message
     """
 
     from django.core.mail import send_mail
@@ -35,7 +44,7 @@ def send_email_task(data: dict, action: str, url: str, request_data: dict, email
     message += f'New password will be: {data["password"]}. ' \
                f'Dont forgot again' if action == 'reset_password_confirm' else ''
     send_mail(subject=f'{action} email',
-              message=f'Your {action} link: \n {url}\n' + message,
+              message=(f'Your {action} link: \n {url}\n' + message) if inactive_message is None else inactive_message,
               from_email=settings.EMAIL_HOST_USER,
               recipient_list=[data['email'] if email is not None else request_data.get('email')],
               fail_silently=False)
@@ -138,3 +147,39 @@ def update_subscribers(subscribers: tp.List[int], pk: int) -> tp.List[int]:
     except Exception as e:
         logger.warning(msg=f'Error in func update_subscribers {str(e)}')
         return []
+
+
+@shared_task(name='users.delete-inactive-users')
+def delete_inactive_users() -> None:
+    """
+    Delete inactive users and uid related to them
+    """
+
+    from django.contrib.auth import get_user_model
+    from apps.user_profile.models import Uid
+
+    logging.info(msg='Start deleting inactive users. Func(delete_inactive_users)')
+    uid_s = Uid.objects.all()
+    for uid in uid_s:
+        if (datetime.date(datetime.now()) - uid.date_created).days >= 2:
+            try:
+                user = get_user_model().objects.get(id=uid.user_id)
+                if user.email is not None:
+                    message = f'Your account will be delete because you didnt activate him for 2 days' if \
+                        uid.updated_data is None else f'Your updated data will be deleted {uid.updated_data} ' \
+                                                      f'because you did not activate her for 2 days. Please try again.'
+                    send_email_task.delay(data=user.__dict__,
+                                          action='delete inactive',
+                                          email=user.email,
+                                          inactive_message=message)
+                user.delete()
+            except get_user_model().DoesNotExist:
+                send_telegram_message.delay(message=f'User with user_id: {uid.user_id} does not exist in database\n'
+                                                    f'But uid with this user_id exist!\n'
+                                                    f'Func: delete_inactive_users',
+                                            group_type='errors')
+            finally:
+                uid.delete()
+    send_telegram_message.delay(message='All uid_s has been deleted. Func(delete_inactive_users)',
+                                group_type='success')
+    logging.info(msg='All uid_s has been deleted. Func(delete_inactive_users)')
