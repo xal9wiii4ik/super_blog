@@ -13,6 +13,11 @@
                 <h4 class="header__list__link">posts</h4>
               </router-link>
             </li>
+            <li class="header__list__item">
+              <router-link class="header__list__link" to="/login/">
+                <h4 class="header__list__link">login</h4>
+              </router-link>
+            </li>
           </ul>
       </nav>
     </div>
@@ -64,11 +69,19 @@ button {
   border: none;
   color: white;
   border-radius: 100px;
-  background-color: rgba(255,20,147, .7);
+  background-color: white;
   padding: 15px;
   text-align: center;
   margin-left: 10px;
   font-size: 15px;
+}
+
+input {
+  text-decoration: none;
+  text-align: center;
+  border-radius: 100px;
+  border: none;
+  outline: none;
 }
 
 .nav__items {
