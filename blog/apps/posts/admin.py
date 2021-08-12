@@ -1,19 +1,10 @@
+import inspect
+import sys
+
 from django.contrib import admin
-
-from apps.posts.models import Post, Category
-
-
-@admin.register(Post)
-class PostModelAdmin(admin.ModelAdmin):
-    """
-    Display table post on admin panel
-    """
-    pass
+from django.db.models.base import ModelBase
 
 
-@admin.register(Category)
-class CategoryModelAdmin(admin.ModelAdmin):
-    """
-    Display table Category on admin panel
-    """
-    pass
+for _, cls in inspect.getmembers(sys.modules['apps.posts.models']):
+    if isinstance(cls, ModelBase):
+        admin.site.register(cls)
