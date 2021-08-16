@@ -28,15 +28,16 @@ def send_updating_email(request: Request, data: dict, action: str, email: str = 
     """
 
     logger.info(msg=f'creating model subscriber for user id: {data["id"]}')
-    try:
-        UserSubscriber.objects.create(owner=get_user_model().objects.get(id=data['id']))
-        logger.info(msg=f'Subscriber for user {data["id"]} has been created')
-        send_telegram_message.delay(message=f'Subscriber for user {data["id"]} has been created',
-                                    group_type='success')
-    except Exception as e:
-        logger.warning(msg=f'Error on creating subscriber for user {data["id"]}; {str(e)}')
-        send_telegram_message.delay(message=f'Error on creating subscriber for user {data["id"]}; {str(e)}',
-                                    group_type='errors')
+    if action != 'reset_password_confirm':
+        try:
+            UserSubscriber.objects.create(owner=get_user_model().objects.get(id=data['id']))
+            logger.info(msg=f'Subscriber for user {data["id"]} has been created')
+            send_telegram_message.delay(message=f'Subscriber for user {data["id"]} has been created',
+                                        group_type='success')
+        except Exception as e:
+            logger.warning(msg=f'Error on creating subscriber for user {data["id"]}; {str(e)}')
+            send_telegram_message.delay(message=f'Error on creating subscriber for user {data["id"]}; {str(e)}',
+                                        group_type='errors')
     logger.info(msg=f'creating web url for {action}')
     uid_data = _create_unique_uid(user_id=data['id'],
                                   updated_data=updated_data)

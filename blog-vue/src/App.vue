@@ -3,27 +3,73 @@
     <div class="nav__items">
       <nav class="header__nav">
         <ul class="header__list">
-            <li class="header__list__item">
-              <router-link class="header__list__link" to="">
-                <h4 class="header__list__link">home</h4>
-              </router-link>
-            </li>
-            <li class="header__list__item">
-              <router-link class="header__list__link" to="/posts/">
-                <h4 class="header__list__link">posts</h4>
-              </router-link>
-            </li>
-            <li class="header__list__item">
-              <router-link class="header__list__link" to="/login/">
-                <h4 class="header__list__link">login</h4>
-              </router-link>
-            </li>
-          </ul>
+          <li class="header__list__item">
+            <router-link class="header__list__link" to="/">
+              <h4 class="header__list__link">home</h4>
+            </router-link>
+          </li>
+          <li class="header__list__item">
+            <router-link class="header__list__link" to="/posts/">
+              <h4 class="header__list__link">posts</h4>
+            </router-link>
+          </li>
+          <li class="header__list__item" v-if="!is_authorized">
+            <router-link class="header__list__link" to="/login/">
+              <h4 class="header__list__link">login</h4>
+            </router-link>
+          </li>
+          <li class="header__list__item" v-if="!is_authorized">
+            <router-link class="header__list__link" to="/sign_up/">
+              <h4 class="header__list__link">sign up</h4>
+            </router-link>
+          </li>
+          <li class="header__list__item" v-if="is_authorized">
+            <router-link class="header__list__link" to="/">
+              <h4 class="header__list__link">{{ this.username }}</h4>
+            </router-link>
+          </li>
+          <li class="header__list__item" v-if="is_authorized">
+            <router-link class="header__list__link" to="/" v-on:click="logout">
+              <h4 class="header__list__link">logout</h4>
+            </router-link>
+          </li>
+        </ul>
       </nav>
     </div>
   </div>
   <router-view/>
 </template>
+
+<script>
+export default {
+  name: "App",
+  data() {
+    return {
+      is_authorized: false,
+      username: '',
+      user_id: '',
+    }
+  },
+  async mounted() {
+    await this.getUserInfo()
+  },
+  methods: {
+    async getUserInfo() {
+      if (localStorage.getItem('access_token')) {
+        this.is_authorized = true
+        this.user_id = localStorage.getItem('user_id')
+        this.username = localStorage.getItem('username')
+      } else {
+        this.is_authorized = false
+      }
+    },
+    async logout() {
+      localStorage.clear()
+      this.is_authorized = false
+    }
+  },
+}
+</script>
 
 <style>
 
@@ -41,7 +87,7 @@ html {
 
 * {
   padding: 0;
-  margin: 0;
+  margin: 0 auto;
   box-sizing: border-box;
   font-family: sans-serif;
 }
@@ -82,6 +128,11 @@ input {
   border-radius: 100px;
   border: none;
   outline: none;
+}
+
+input::placeholder {
+  color: white;
+  font-style: italic;
 }
 
 .nav__items {

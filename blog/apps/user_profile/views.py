@@ -88,6 +88,7 @@ class UserProfileModelViewSet(ModelViewSet):
     @action(detail=False,
             methods=['POST'],
             permission_classes=[permissions.AllowAny],
+            parser_classes=[JSONParser],
             url_path=r'reset_password')
     def reset_password(self, request, *args, **kwargs) -> Response:
         """

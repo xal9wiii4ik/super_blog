@@ -9,7 +9,7 @@ from blog import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(('apps.posts.urls', 'post'), namespace='post')),
-    path('api/', include(('apps.user_profile.urls', 'post'), namespace='user_profile')),
+    path('api/', include(('apps.user_profile.urls', 'user_profile'), namespace='user_profile')),
     path('token/', CustomTokenObtainPairView.as_view(), name='token')
 ]
 

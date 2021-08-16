@@ -21,7 +21,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs: tp.Any):
         data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
-        data['id'] = Account.objects.get(username=attrs['username']).id
+        account = Account.objects.get(username=attrs['username'])
+        data['id'] = account.id
+        data['username'] = account.username
         return data
 
 
