@@ -12,6 +12,7 @@ const routes = [
         component: () => import('@/views/posts')
     },
     {
+        //TODO delete in future
         path: '/check',
         name: 'check',
         component: () => import('@/views/check')
