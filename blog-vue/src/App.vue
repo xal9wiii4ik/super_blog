@@ -24,7 +24,7 @@
             </router-link>
           </li>
           <li class="header__list__item" v-if="is_authorized">
-            <router-link class="header__list__link" to="/">
+            <router-link class="header__list__link" to="/user_profile">
               <h4 class="header__list__link">{{ this.username }}</h4>
             </router-link>
           </li>
@@ -107,6 +107,7 @@ a {
   height: 100%;
   margin: 0 auto;
   text-align: center;
+  padding-top: 50px;
 }
 
 button {

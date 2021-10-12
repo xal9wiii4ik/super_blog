@@ -64,7 +64,6 @@ export default {
 <style scoped>
 
 .container {
-  position: absolute;
   justify-content: center;
   display: flex;
   align-items: center;

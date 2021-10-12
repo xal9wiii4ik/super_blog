@@ -12,12 +12,18 @@ const routes = [
         component: () => import('@/views/posts')
     },
     {
+        path: '/user_profile',
+        name: 'user_profile',
+        component: () => import('@/views/user_profile')
+    },
+    {
         //TODO delete in future
         path: '/check',
         name: 'check',
         component: () => import('@/views/check')
     },
     {
+        //TODO use refresh token
         path: '/login',
         name: 'login',
         component: () => import('@/views/login')
